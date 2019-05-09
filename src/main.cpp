@@ -26,8 +26,6 @@ Thread display(osPriorityRealtime1);
 static void led1Toggle(void);
 static void requestTask(void);
 static void displayTask(void);
-static void canWriteTask(void);
-static void canReadTask(void);
 static void canHandler(void);
 
 int main () {
@@ -37,11 +35,9 @@ int main () {
     canInit(BD125000, true);
     pc.printf("Display -- Loopback test\n");
 
-    //status = request.start(canReadTask);
 		status = request.start(requestTask);
     assert(osOK == status);
 		status = display.start(displayTask);
-    //status = display.start(canWriteTask);
     assert(osOK == status);
 
     while (true) {
@@ -63,7 +59,7 @@ static void requestTask(void) {
 
 	while(true) {
 		txOk = canWrite(&txMsg);
-		wait_ms(1000);
+		wait_ms(500);
 	}
 }
 
@@ -84,39 +80,3 @@ void canHandler(void) {
     canTransferRxFrame(&rxMsg);
     rxDone.release();
 }
-
-/* Transmit CAN message with arbitrary id and 8 bytes of
- * data consisting of a repeated count of the number of transmitted messages
- */ 
-/*void canWriteTask(void) {
-  
-  static canMessage_t txMsg = {0x23, 8, 0, 0}; 
-  bool txOk;
-    
-  while (true) {
-      // Transmit message on CAN 
-      txOk = canWrite(&txMsg);
-      if (txOk) {
-				txCount += 1;
-				txMsg.dataA = txCount;
-				txMsg.dataB = txCount;
-      }
-      wait_ms(250);
-  }
-}*/
-
-/* Read and display messages arriving on the CAN port */
-/*void canReadTask(void) {
-  canRxInterrupt(canHandler); // configure CAN to interrupt on message reception
-
-  rxDone = false;
-  while (true) {
-      if (rxDone) { // rxDone could be better handled by a semaphore
-	rxDone = false;
-        pc.printf("ID: 0x%lx LEN: 0x%01lx DATA_A: 0x%08lx DATA_B: 0x%08lx\n", rxMsg.id, rxMsg.len, rxMsg.dataA, rxMsg.dataB); 
-        rxCount += 1;
-      }
-      wait_ms(100);
-  }
-}*/
-    
