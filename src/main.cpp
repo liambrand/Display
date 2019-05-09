@@ -58,9 +58,12 @@ static void led1Toggle(void) {
  * reading from EngineMonitor
 */
 static void requestTask(void) {
+	static canMessage_t txMsg = {0x23, 8, 0, 0};
+	bool txOk;
+
 	while(true) {
-		pc.printf("Request");
-		wait_ms(500);
+		txOk = canWrite(&txMsg);
+		wait_ms(1000);
 	}
 }
 
@@ -71,7 +74,7 @@ static void displayTask(void) {
 	canRxInterrupt(canHandler);
 	while(true) {
 		rxDone.wait();
-		pc.printf("Display");
+		pc.printf("ID: 0x%lx LEN: 0x%01lx DATA_A: 0x%08lx DATA_B: 0x%08lx\n", rxMsg.id, rxMsg.len, rxMsg.dataA, rxMsg.dataB);
 		wait_ms(500);
 	}
 }
@@ -79,7 +82,7 @@ static void displayTask(void) {
 /* A simple interrupt handler for CAN message reception */
 void canHandler(void) {
     canTransferRxFrame(&rxMsg);
-    rxDone = true;
+    rxDone.release();
 }
 
 /* Transmit CAN message with arbitrary id and 8 bytes of
