@@ -19,12 +19,13 @@ static Serial pc(USBTX, USBRX, 115200);
 static uint32_t txCount;
 static uint32_t rxCount;
 static volatile canMessage_t rxMsg;
-static volatile bool rxDone;
-
-Thread writer(osPriorityRealtime);
-Thread reader(osPriorityRealtime1);
+Semaphore rxDone;
+Thread request(osPriorityRealtime);
+Thread display(osPriorityRealtime1);
 
 static void led1Toggle(void);
+static void requestTask(void);
+static void displayTask(void);
 static void canWriteTask(void);
 static void canReadTask(void);
 static void canHandler(void);
@@ -36,9 +37,11 @@ int main () {
     canInit(BD125000, true);
     pc.printf("Display -- Loopback test\n");
 
-    status = reader.start(canReadTask);
+    //status = request.start(canReadTask);
+		status = request.start(requestTask);
     assert(osOK == status);
-    status = writer.start(canWriteTask);
+		status = display.start(displayTask);
+    //status = display.start(canWriteTask);
     assert(osOK == status);
 
     while (true) {
@@ -51,10 +54,38 @@ static void led1Toggle(void) {
   red = 1 - red;
 }
 
+/* Transmit CAN message requesting temperature
+ * reading from EngineMonitor
+*/
+static void requestTask(void) {
+	while(true) {
+		pc.printf("Request");
+		wait_ms(500);
+	}
+}
+
+/* Pend on a semaphore released by an RX Interrupt
+ * When released, display the recieved temperature reading to a terminal
+*/
+static void displayTask(void) {
+	canRxInterrupt(canHandler);
+	while(true) {
+		rxDone.wait();
+		pc.printf("Display");
+		wait_ms(500);
+	}
+}
+
+/* A simple interrupt handler for CAN message reception */
+void canHandler(void) {
+    canTransferRxFrame(&rxMsg);
+    rxDone = true;
+}
+
 /* Transmit CAN message with arbitrary id and 8 bytes of
  * data consisting of a repeated count of the number of transmitted messages
  */ 
-void canWriteTask(void) {
+/*void canWriteTask(void) {
   
   static canMessage_t txMsg = {0x23, 8, 0, 0}; 
   bool txOk;
@@ -63,16 +94,16 @@ void canWriteTask(void) {
       // Transmit message on CAN 
       txOk = canWrite(&txMsg);
       if (txOk) {
-	txCount += 1;
-	txMsg.dataA = txCount;
-	txMsg.dataB = txCount;
+				txCount += 1;
+				txMsg.dataA = txCount;
+				txMsg.dataB = txCount;
       }
       wait_ms(250);
   }
-}
+}*/
 
 /* Read and display messages arriving on the CAN port */
-void canReadTask(void) {
+/*void canReadTask(void) {
   canRxInterrupt(canHandler); // configure CAN to interrupt on message reception
 
   rxDone = false;
@@ -84,11 +115,5 @@ void canReadTask(void) {
       }
       wait_ms(100);
   }
-}
-
-/* A simple interrupt handler for CAN message reception */
-void canHandler(void) {
-    canTransferRxFrame(&rxMsg);
-    rxDone = true;
-}
+}*/
     
