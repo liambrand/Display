@@ -14,7 +14,7 @@
 #include <assert.h>
 #include "can.h"
 
-static DigitalOut red(LED_RED);
+static DigitalOut green(LED_GREEN);
 static Serial pc(USBTX, USBRX, 115200);
 static uint32_t txCount;
 static uint32_t rxCount;
@@ -31,9 +31,9 @@ static void canHandler(void);
 int main () {
     osStatus status;
 
-    red = 0;
-    canInit(BD125000, true);
-    pc.printf("Display -- Loopback test\n");
+    green = 0;
+    canInit(BD125000, false);
+    pc.printf("Display\n");
 
 		status = request.start(requestTask);
     assert(osOK == status);
@@ -41,24 +41,19 @@ int main () {
     assert(osOK == status);
 
     while (true) {
-      led1Toggle();
       wait_ms(500);
     }
-}
-
-static void led1Toggle(void) {
-  red = 1 - red;
 }
 
 /* Transmit CAN message requesting temperature
  * reading from EngineMonitor
 */
 static void requestTask(void) {
-	static canMessage_t txMsg = {0x23, 8, 0, 0};
+	static canMessage_t requestMsg = {0x23, 8, 0, 0};
 	bool txOk;
 
 	while(true) {
-		txOk = canWrite(&txMsg);
+		txOk = canWrite(&requestMsg);
 		wait_ms(500);
 	}
 }
