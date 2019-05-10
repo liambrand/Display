@@ -13,13 +13,15 @@
 #include <stdio.h>
 #include <assert.h>
 #include "can.h"
+#include "counter.h"
 
 static DigitalOut green(LED_GREEN);
 static Serial pc(USBTX, USBRX, 115200);
 static uint32_t txCount;
 static uint32_t rxCount;
 static volatile canMessage_t rxMsg;
-Semaphore rxDone;
+uint32_t timeElapsed;
+Semaphore rxDone(1);
 Thread request(osPriorityRealtime);
 Thread display(osPriorityRealtime1);
 
@@ -39,7 +41,7 @@ int main () {
     assert(osOK == status);
 		status = display.start(displayTask);
     assert(osOK == status);
-
+    counterInit();
     while (true) {
       wait_ms(500);
     }
@@ -65,7 +67,8 @@ static void displayTask(void) {
 	canRxInterrupt(canHandler);
 	while(true) {
 		rxDone.wait();
-		pc.printf("ID: 0x%lx LEN: 0x%01lx DATA_A: 0x%08lx DATA_B: 0x%08lx\n", rxMsg.id, rxMsg.len, rxMsg.dataA, rxMsg.dataB);
+		//pc.printf("ID: 0x%lx LEN: 0x%01lx DATA_A: 0x%08lx DATA_B: 0x%08lx\n", rxMsg.id, rxMsg.len, rxMsg.dataA, rxMsg.dataB);
+    pc.printf("Temperature: 0x%08lx\n", rxMsg.dataB);
 		wait_ms(500);
 	}
 }
