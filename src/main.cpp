@@ -50,12 +50,11 @@ int main () {
  * reading from EngineMonitor
 */
 static void requestTask(void) {
-	static canMessage_t requestMsg = {0x23, 8, 0x10, 0};
+	static canMessage_t requestMsg = {0x24, 8, 0, 0};
 	bool txOk;
 
 	while(true) {
 		txOk = canWrite(&requestMsg);
-		wait_ms(500);
 	}
 }
 
