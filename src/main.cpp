@@ -41,7 +41,6 @@ int main () {
     assert(osOK == status);
 		status = display.start(displayTask);
     assert(osOK == status);
-    counterInit();
     while (true) {
       wait_ms(500);
     }
@@ -51,7 +50,7 @@ int main () {
  * reading from EngineMonitor
 */
 static void requestTask(void) {
-	static canMessage_t requestMsg = {0x23, 8, 0, 0};
+	static canMessage_t requestMsg = {0x23, 8, 0x10, 0};
 	bool txOk;
 
 	while(true) {
@@ -68,7 +67,6 @@ static void displayTask(void) {
 	while(true) {
 		rxDone.wait();
     pc.printf("Temperature: 0x%08lx\n", rxMsg.dataB);
-		wait_ms(500);
 	}
 }
 
